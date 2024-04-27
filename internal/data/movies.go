@@ -139,3 +139,24 @@ ORDER BY %s %s,id ASC LIMIT $3 OFFSET $4`, strings.TrimPrefix(filters.Sort, "-")
 	return movies, meta, nil
 
 }
+
+func (m *MovieModel) GetAverageRating(movie_ID int64) (*AverageRating, error) {
+
+	//query := `SELECT AVG(rating) AS average_rating,count(*) AS rating_count FROM ratings WHERE movie_id = $1`
+	query := `SELECT COALESCE(AVG(rating), 0) AS average_rating,COALESCE(count(*), 0) AS rating_count FROM ratings
+	WHERE movie_id = $1;`
+
+	var averageRating AverageRating
+
+	if err := m.DB.QueryRow(query, movie_ID).Scan(&averageRating.AverageRating, &averageRating.RatingCount); err != nil {
+		if err == sql.ErrNoRows {
+			// No ratings found for the movie, set averageRating to 0
+			averageRating.AverageRating = 0
+			averageRating.RatingCount = 0
+			return &averageRating, nil
+		}
+		return nil, err
+	}
+
+	return &averageRating, nil
+}

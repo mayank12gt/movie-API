@@ -10,11 +10,13 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 func (app *app) serve() error {
 
 	server := echo.New()
+	server.Use(middleware.CORS())
 	app.registerHandlers(server)
 
 	shutdownErr := make(chan error)
@@ -64,6 +66,13 @@ func (app *app) registerHandlers(server *echo.Echo) {
 	server.GET("/movies", app.listMovieHandler())
 	server.GET("/movies/:id", app.getMovieHandler())
 	server.DELETE("/movies/:id", app.checkPermission("movies:write", app.deleteMovieHandler()))
+
+	server.POST("/movies/:id/ratings", app.submitMovieRatingHandler(), app.authenticate)
+	server.GET("/movies/:id/ratings", app.getMovieAverageRatingHandler())
+
+	// server.GET("/movies/:id/ratings",app.getMovieRatingsHandler())
+	// server.PUT("/movies/:id/ratings",app.updateMovieRatingsHandler())
+	// server.DELETE("/movies/:id/ratings",app.deleteMovieRatingsHandler())
 
 	server.POST("/users", app.registerUserHandler())
 	server.POST("/users/activate", app.activateUserHandler())

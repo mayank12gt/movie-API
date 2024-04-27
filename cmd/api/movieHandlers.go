@@ -159,3 +159,50 @@ func (app *app) listMovieHandler() func(c echo.Context) error {
 
 	}
 }
+
+func (app *app) submitMovieRatingHandler() func(c echo.Context) error {
+	return func(c echo.Context) error {
+
+		movie_ID, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, err.Error())
+		}
+
+		var input struct {
+			Rating float64 `json:"rating" validate:"min=1"`
+		}
+		user := c.Get("user").(*data.User)
+
+		if err := c.Bind(&input); err != nil {
+			return c.JSON(400, "Bad Request")
+		}
+
+		rating := data.Rating{
+			User_id:  user.ID,
+			Movie_id: int64(movie_ID),
+			Rating:   input.Rating,
+		}
+
+		if err := app.models.Ratings.AddRating(&rating); err != nil {
+			return c.JSON(500, err.Error())
+		}
+
+		return c.JSON(200, rating)
+	}
+}
+
+func (app *app) getMovieAverageRatingHandler() func(c echo.Context) error {
+	return func(c echo.Context) error {
+		id, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, err.Error())
+		}
+
+		avearageRating, err := app.models.Movies.GetAverageRating(int64(id))
+		if err != nil {
+			return c.JSON(200, err.Error())
+		}
+
+		return c.JSON(200, avearageRating)
+	}
+}
