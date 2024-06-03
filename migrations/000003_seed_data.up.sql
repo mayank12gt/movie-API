@@ -7,8 +7,13 @@ genres text[] NOT NULL
 );
 
 -- Copy data from CSV to the temporary table
+--COPY temp_table (title, year, runtime, genres)
+--FROM '/tmp/movie_seed.csv' DELIMITER ',' CSV HEADER;
+
 COPY temp_table (title, year, runtime, genres)
 FROM 'C:\Temp\movie_seed.csv' DELIMITER ',' CSV HEADER;
+
+
 
 
 

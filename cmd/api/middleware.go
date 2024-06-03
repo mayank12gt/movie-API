@@ -12,12 +12,16 @@ func (app *app) authenticate(next echo.HandlerFunc) echo.HandlerFunc {
 		authToken, err := c.Cookie("token")
 
 		if err != nil {
-			return c.String(400, "unauthenticated")
+			return c.JSON(400, map[string]string{
+				"error": "user is not authenticated",
+			})
 		}
 
 		user, err := app.models.Users.GetForToken(data.ScopeAuthentication, authToken.Value)
 		if err != nil {
-			return c.JSON(400, err.Error())
+			return c.JSON(500, map[string]string{
+				"message": "Internal server error",
+			})
 		}
 
 		c.Set("user", user)
@@ -34,10 +38,14 @@ func (app *app) checkPermission(code string, next echo.HandlerFunc) echo.Handler
 
 		permissions, err := app.models.Permissions.GetAllForUser(user.ID)
 		if err != nil {
-			return c.JSON(400, err.Error())
+			return c.JSON(500, map[string]string{
+				"message": "internal server error",
+			})
 		}
 		if !permissions.Include(code) {
-			return c.JSON(400, "Not Permitted")
+			return c.JSON(400, map[string]string{
+				"message": "user does not have the required permission",
+			})
 		}
 
 		return next(c)

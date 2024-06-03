@@ -37,19 +37,64 @@ func (m *RatingModel) AddRating(rating *Rating) error {
 	return err
 }
 
-// func (m *RatingModel) UpdateRating(rating *Rating) error {
+func (m *RatingModel) GetRating(rating *Rating) error {
 
-// 	query := `UPDATE users
-// 	SET name = $1, email = $2, password_hash = $3, activated = $4, version = version + 1
-// 	WHERE id = $5 AND version = $6
-// 	RETURNING version`
+	query := `SELECT * from ratings WHERE user_id = $1 AND movie_id = $2`
 
-// 	args := []interface{}{rating.User_id, rating.Movie_id, rating.Rating}
+	args := []interface{}{rating.User_id, rating.Movie_id}
 
-// 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-// 	defer cancel()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
-// 	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&rating.User_id, &rating.Movie_id, &rating.Rating, &rating.Created_at, &rating.Version)
+	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&rating.User_id, &rating.Movie_id, &rating.Rating, &rating.Created_at, &rating.Version)
 
-// 	return err
-// }
+	// if err != nil{
+	// 	if errors.Is(err,sql.ErrNoRows){
+	// 		return errors.New("no records")
+	// 	}
+	// }
+
+	return err
+}
+
+func (m *RatingModel) UpdateRating(rating *Rating) error {
+
+	query := `UPDATE ratings
+	SET rating = $1, version = version + 1
+	WHERE user_id = $2 AND movie_id = $3
+	RETURNING user_id,movie_id,rating,created_at,version`
+
+	args := []interface{}{rating.Rating, rating.User_id, rating.Movie_id}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&rating.User_id, &rating.Movie_id, &rating.Rating, &rating.Created_at, &rating.Version)
+
+	return err
+}
+
+func (m *RatingModel) DeleteRating(rating *Rating) error {
+
+	query := `DELETE from ratings where user_id=$1 AND movie_id=$2`
+
+	args := []interface{}{rating.User_id, rating.Movie_id}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	result, err := m.DB.ExecContext(ctx, query, args...)
+
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return ErrRecordNotFound
+	}
+
+	return nil
+}

@@ -66,21 +66,24 @@ func (app *app) registerHandlers(server *echo.Echo) {
 	server.GET("/movies", app.listMovieHandler())
 	server.GET("/movies/:id", app.getMovieHandler())
 	server.DELETE("/movies/:id", app.checkPermission("movies:write", app.deleteMovieHandler()))
+	server.PUT("/movies/:id", app.checkPermission("movies:write", app.updateMovieHandler()))
 
 	server.POST("/movies/:id/ratings", app.submitMovieRatingHandler(), app.authenticate)
 	server.GET("/movies/:id/ratings", app.getMovieAverageRatingHandler())
-
-	// server.GET("/movies/:id/ratings",app.getMovieRatingsHandler())
-	// server.PUT("/movies/:id/ratings",app.updateMovieRatingsHandler())
-	// server.DELETE("/movies/:id/ratings",app.deleteMovieRatingsHandler())
+	server.GET("/movies/:id/rating", app.getMovieRatingHandler(), app.authenticate)
+	server.PUT("/movies/:id/ratings", app.updateMovieRatingHandler(), app.authenticate)
+	server.DELETE("/movies/:id/ratings", app.deleteMovieRatingHandler(), app.authenticate)
 
 	server.POST("/users", app.registerUserHandler())
 	server.POST("/users/activate", app.activateUserHandler())
 	server.POST("/users/authenticate", app.createAuthenticationTokenHandler())
+	server.POST("/users/signOut", app.signOutHandler(), app.authenticate)
 
 	server.GET("/", func(c echo.Context) error {
 		//time.Sleep(4 * time.Second)
-		return c.JSON(200, "hello")
+		return c.JSON(200, map[string]string{
+			"message": "Up and Running",
+		})
 	})
 
 }

@@ -2,9 +2,8 @@
 
 {{define "plainBody"}}
 Hi, 
-Thanks for signing up to our platform.We're excited to have you on board!
-For future reference, your user ID number is {{.ID}}.
-Please send a request to the `PUT /users/activated` endpoint with the following JSON
+Thanks for signing up to our platform. We're excited to have you on board!
+Please send a request to the `PUT /users/activate` endpoint with the following JSON
 body to activate your account:
 {"token": "{{.activationToken}}"}
 Please note that this is a one-time use token and it will expire in 3 days.
@@ -22,8 +21,7 @@ Thanks,
 <body>
 <p>Hi,</p>
 <p>Thanks for signing up to MovieDB Webapp. We're excited to have you on board!</p>
-<p>For future reference, your user ID number is {{.ID}}.</p>
-<p>Please send a request to the <code>PUT /v1/users/activated</code> endpoint with the
+<p>Please send a request to the <code>PUT /users/activate</code> endpoint with the
 following JSON body to activate your account:</p>
 <pre><code>
 {"token": "{{.activationToken}}"}

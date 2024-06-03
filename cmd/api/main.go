@@ -49,13 +49,13 @@ func main() {
 	flag.IntVar(&cfg.port, "port", 4000, "API Server Port")
 	flag.StringVar(&cfg.env, "env", "dev", "Env(dev|staging|prod)")
 
-	flag.StringVar(&cfg.db.dsn, "db-dsn", os.Getenv("DSN"), "PostgreSQL DSN")
+	flag.StringVar(&cfg.db.dsn, "db-dsn", "", "PostgreSQL DSN")
 
-	flag.StringVar(&cfg.smtp.host, "smtp-host", "sandbox.smtp.mailtrap.io", "SMTP host")
-	flag.IntVar(&cfg.smtp.port, "smtp-port", 25, "SMTP port")
-	flag.StringVar(&cfg.smtp.username, "smtp-username", "a5e17edb57d773", "SMTP username")
-	flag.StringVar(&cfg.smtp.password, "smtp-password", "1de789a2d550ae", "SMTP password")
-	flag.StringVar(&cfg.smtp.sender, "smtp-sender", "MoviesDB <no-reply@moviesdb.net>", "SMTP sender")
+	flag.StringVar(&cfg.smtp.host, "smtp-host", "live.smtp.mailtrap.io", "SMTP host")
+	flag.IntVar(&cfg.smtp.port, "smtp-port", 587, "SMTP port")
+	flag.StringVar(&cfg.smtp.username, "smtp-username", "api", "SMTP username")
+	flag.StringVar(&cfg.smtp.password, "smtp-password", "c98a736044ed50a9213cd04722fa6e17", "SMTP password")
+	flag.StringVar(&cfg.smtp.sender, "smtp-sender", "MoviesDB <movies@mayankgupta.site>", "SMTP sender")
 
 	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
 

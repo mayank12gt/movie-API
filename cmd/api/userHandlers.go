@@ -1,11 +1,14 @@
 package main
 
 import (
+	"database/sql"
+	"errors"
 	"net/http"
 	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
+	"github.com/lib/pq"
 	"github.com/mayank12gt/movie-webapp/internal/data"
 )
 
@@ -19,7 +22,9 @@ func (app *app) registerUserHandler() func(c echo.Context) error {
 		}
 
 		if err := c.Bind(&input); err != nil {
-			return c.JSON(http.StatusBadRequest, "Bad Request")
+			return c.JSON(http.StatusBadRequest, map[string]string{
+				"message": "Bad Request, verify json body",
+			})
 		}
 
 		user := &data.User{
@@ -29,7 +34,9 @@ func (app *app) registerUserHandler() func(c echo.Context) error {
 		}
 
 		if err := user.Password.Set(input.Password); err != nil {
-			return c.JSON(http.StatusBadRequest, err.Error())
+			return c.JSON(http.StatusBadRequest, map[string]string{
+				"message": "Bad Request, verify json body",
+			})
 		}
 
 		v := validator.New()
@@ -37,23 +44,39 @@ func (app *app) registerUserHandler() func(c echo.Context) error {
 			errors := err.(validator.ValidationErrors)
 			app.logger.Print(errors)
 
-			return c.JSON(422, errors.Error())
+			return c.JSON(422, map[string]string{
+				"message": err.Error(),
+			})
 		}
 
 		app.logger.Print(user)
 
 		if err := app.models.Users.Insert(user); err != nil {
-			return c.JSON(http.StatusInternalServerError, "Could not insert data")
+			switch err.(*pq.Error).Code.Name() {
+			case "unique_violation":
+				return c.JSON(http.StatusBadRequest, map[string]string{
+					"message": "Primary key constraint violated, duplicate entry",
+				})
+
+			default:
+				return c.JSON(http.StatusInternalServerError, map[string]string{
+					"message": "Internal Server Error",
+				})
+			}
 		}
 
 		err := app.models.Permissions.AddForUser(user.ID, "movies:read")
 		if err != nil {
-			return c.JSON(400, err.Error())
+			return c.JSON(500, map[string]string{
+				"message": "Internal Server Error",
+			})
 		}
 
 		token, err := app.models.Tokens.New(user.ID, 3*24*time.Hour, data.ScopeActivation)
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, err.Error())
+			return c.JSON(http.StatusInternalServerError, map[string]string{
+				"message": "Internal Server Error",
+			})
 		}
 
 		app.background(func() {
@@ -82,7 +105,9 @@ func (app *app) activateUserHandler() func(c echo.Context) error {
 		}
 
 		if err := c.Bind(&input); err != nil {
-			return c.JSON(http.StatusBadRequest, "Bad Request")
+			return c.JSON(http.StatusBadRequest, map[string]string{
+				"message": "Bad Request, verify json body",
+			})
 		}
 		validate := validator.New()
 
@@ -90,25 +115,40 @@ func (app *app) activateUserHandler() func(c echo.Context) error {
 			errors := err.(validator.ValidationErrors)
 			app.logger.Print(errors)
 
-			return c.JSON(422, errors.Error())
+			return c.JSON(422, map[string]string{
+				"message": err.Error(),
+			})
 		}
 
 		user, err := app.models.Users.GetForToken(data.ScopeActivation, input.TokenPlainText)
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, err.Error())
+			if errors.Is(err, sql.ErrNoRows) {
+				return c.JSON(404, map[string]string{
+					"message": "no records found",
+				})
+			}
+			return c.JSON(http.StatusInternalServerError, map[string]string{
+				"message": "Internal Server Error",
+			})
 		}
 		user.Activated = true
 
 		err = app.models.Users.Update(user)
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, err.Error())
+			return c.JSON(http.StatusInternalServerError, map[string]string{
+				"message": "Internal Server Error",
+			})
 		}
 
 		err = app.models.Tokens.DeleteAllForUser(user.ID, data.ScopeActivation)
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, err.Error())
+			return c.JSON(http.StatusInternalServerError, map[string]string{
+				"message": "Internal Server Error",
+			})
 		}
 
-		return c.JSON(200, "Token Ok")
+		return c.JSON(200, map[string]string{
+			"message": "Token is OK, User verified",
+		})
 	}
 }

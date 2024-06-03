@@ -130,6 +130,7 @@ func (m UserModel) Update(user *User) error {
 	defer cancel()
 	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&user.Version)
 	if err != nil {
+		log.Print(err.Error())
 		return err
 	}
 
