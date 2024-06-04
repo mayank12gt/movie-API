@@ -7,6 +7,8 @@ After signing up a verification email with a validation token is sent to the res
 ## User Authentication
 Some request like GET all movies, GET average movie rating are public and do not require authentication while others like GET/POST user rating for a movie require user authentication.
 The api uses a stateful auth system, where to authenticate users have to send the email and password to the /users/authenticate endpoint, if the email exists and password is correct, an auth token with 24 hour validity is generated to track the user's session and sent with the response as a URL cookie. For requests which require authentication, this token must be sent with the request
+## Postman Documentation
+https://documenter.getpostman.com/view/26059341/2sA3Qy6pXa
 
 
 
